@@ -1,1 +1,1 @@
-# Chapter 2 exercises from Analyzing Baseball Data in R
+# Chapter 3 exercises from Analyzing Baseball Data in R
