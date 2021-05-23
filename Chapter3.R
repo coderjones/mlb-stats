@@ -172,8 +172,6 @@ ggplot(filter(df, playerID == rose_id),
 
 # 7 a. Create Mark McGwire and Sammy Sosa df
 
-library(lubridate)
-
 # Read in data
 fields <- read_csv("data/fields.csv")
 data1998 <- read_csv("data/all1998.csv",
