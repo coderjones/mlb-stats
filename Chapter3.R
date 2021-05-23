@@ -40,4 +40,49 @@ hofpitching %>% arrange(desc(WAR)) %>%
 hofpitching <- hofpitching %>%
   mutate(WAR.Season = WAR/Yrs)
 
+# a. Use geom_point() to construct parallel on-D scatterplots of WAR.Season for the different levels 
+# of BF.group
+
+ggplot(hofpitching, aes(WAR.Season, BF.group)) + geom_point() 
+
+# b Use the geom_boxplot() function to construct parallel boxplots 
+
+ggplot(hofpitching, aes(WAR.Season, BF.group)) + geom_boxplot() 
+
+# 4. Explore pitcher's mid-career that was after 1960
+
+hofpitching <- hofpitching %>%
+  mutate(MidYear = (From+To)/2)
+
+hofpitching.recent <- hofpitching %>%
+  filter(MidYear >= 1960)
+
+# a Use arrange() order the rows of the df by WAR.Season
+
+hofpitching.recent %>% arrange(desc(WAR.Season)) %>% head(5)
+
+# b Construct a dot plot of the values of WAR.Season where the labels are the pitcher's names
+
+ggplot(hofpitching.recent, aes(WAR.Season, y = 1, label= X)) + geom_text(angle = 45)
+
+# c top 2 midyear war
+hofpitching.recent %>% arrange(desc(WAR.Season)) %>% 
+  slice(1:2) %>% select(X, WAR.Season)
+
+# 5. a. Construct a scatterplot of MidYears horizontal against WAR.Season vertical
+
+ggplot(hofpitching.recent, aes(MidYear,WAR.Season)) + geom_point() + geom_smooth()
+
+# b. No, no general pattern. Points look pretty evenly distributed. With smoothing, it looks like
+# a downward trend towards the end.
+
+# c
+ggplot(hofpitching, 
+       aes(x = MidYear, y = WAR.Season, label=X)) +
+  geom_point() +
+  geom_text(data = filter(hofpitching, 
+                          MidYear < 1900, WAR.Season < 2))
+
+# Working with Lahman Batting dataset a. load it
+library(Lahman)
 
