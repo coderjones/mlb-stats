@@ -110,3 +110,31 @@ out %>% mutate(type = ifelse(WinPct > .7, "great",
 ggplot(out, aes(I.R...RA., .resid, color=type)) +
   geom_point() +
   geom_hline(yintercept = 0)
+
+# 3 Exploring the manager effect in baseball. Retrosheet game logs report
+
+# The book says Retrosheet, but the solution provided uses Lahman. This is partly
+# my solution and the book's.
+
+# a. Select a period of a least 10 years and fit the Pythagorean formula model to the RD/WL data
+
+my_21st_teams <- Teams %>% filter(yearID > 2000, yearID < 2021) %>%
+  mutate(RD = R - RA, Wpct_pyt = R ^ 2 / (R ^ 2 + RA ^ 2))
+
+lin21 <- lm(Wpct_pyt ~ RD, data = my_21st_teams)
+
+# b. On the basis of the fit and list of managers
+
+out <- augment(lin21, data = select(d, yearID, teamID,
+                                  R, RA))
+out %>% inner_join(select(Managers, playerID, yearID,
+                          teamID), 
+                   by = c("yearID", "teamID")) -> out
+out %>% group_by(playerID) %>% 
+  summarize(N = n(), Mean_Residual = mean(.resid)) %>% 
+  arrange(desc(Mean_Residual)) -> out
+head(out)
+tail(out)
+
+# 4. Pythagorean Relationship for other sports
+
