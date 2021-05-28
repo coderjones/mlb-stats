@@ -66,3 +66,47 @@ p10 <- function(fit){
   predict(fit, data.frame(R = 30, RA = 20))
 }
 sapply(four_fits, p10)
+
+#### 2 Pythagorean Residuals for Poor and Great Teams in the 19th Century
+
+# a. Fit a Pythagorean formula model to the run-diff, W/L for team in the 19th century
+my_19th_teams <- Teams %>% filter(yearID <= 1900) %>%
+  select(teamID, yearID, W, L, R, RA) %>%
+  mutate(RD = R - RA, Wpct = W / (W + L))
+
+my_19th_teams <- my_19th_teams %>% mutate(Wpct_pyt = R ^ 2 / (R ^ 2 + RA ^ 2))
+
+
+lin19 <- lm(Wpct_pyt ~ RD, data = my_19th_teams)
+
+library(broom)
+res <- augment(lin19)
+
+res %>% mutate(type = ifelse(Wpct_pyt > .7, "great",
+                             ifelse(Wpct_pyt < .3, "bad", "other"))) -> res
+
+ggplot(res, aes(Wpct_pyt, .resid, color=type)) +
+  geom_point() +
+  geom_hline(yintercept = 0)
+
+# Book solution:
+
+Teams %>% filter(yearID <= 1900) %>% 
+  mutate(WinPct = W / (W + L)) ->
+  D_19th
+
+#(b) By inspecting the residual plot of your fitted model from (a), did the great and poor teams in the 19th century do better or worse than one would expect on the basis of their run differentials?
+  
+#  Below I construct a graph of the values of R - RA (horizontal) against the residual (vertical).  I color the point by the winning proportion (bad is WinPct < .3 and great is WinPct > .7).  We see some great teams with large positive residuals and bad teams with large negative residuals.  By exploring further, can find the identity of the teams with the large residuals.
+
+# This code also doesn't plot
+
+fit <- lm(WinPct ~ I(R - RA), data = D_19th)
+fit
+library(broom)
+out <- augment(fit)
+out %>% mutate(type = ifelse(WinPct > .7, "great",
+                             ifelse(WinPct < .3, "bad", "other"))) -> out
+ggplot(out, aes(I.R...RA., .resid, color=type)) +
+  geom_point() +
+  geom_hline(yintercept = 0)
