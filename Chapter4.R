@@ -6,24 +6,24 @@ library(tidyverse)
 
 # a. Fit linear regression model for the 60s, 70s, 80s, 90s
 
-# 60s 
+# 60s
 my_60_teams <- Teams %>% filter(yearID > 1960, year < 1971) %>%
-  select(teamID, yearID, lgID, G, W, L, R, RA) %>% 
+  select(teamID, yearID, lgID, G, W, L, R, RA) %>%
   mutate(RD = R - RA, Wpct = W / (W + L))
 
-# 70s 
+# 70s
 my_70_teams <- Teams %>% filter(yearID > 1970, yearID < 1981) %>%
-  select(teamID, yearID, lgID, G, W, L, R, RA) %>% 
+  select(teamID, yearID, lgID, G, W, L, R, RA) %>%
   mutate(RD = R - RA, Wpct = W / (W + L))
 
-# 80s 
+# 80s
 my_80_teams <- Teams %>% filter(yearID > 1980, yearID < 1991) %>%
-  select(teamID, yearID, lgID, G, W, L, R, RA) %>% 
+  select(teamID, yearID, lgID, G, W, L, R, RA) %>%
   mutate(RD = R - RA, Wpct = W / (W + L))
 
-# 90s 
+# 90s
 my_90_teams <- Teams %>% filter(yearID > 1990, yearID < 2001) %>%
-  select(teamID, yearID, lgID, G, W, L, R, RA) %>% 
+  select(teamID, yearID, lgID, G, W, L, R, RA) %>%
   mutate(RD = R - RA, Wpct = W / (W + L))
 
 lin60 <- lm(Wpct ~ RD, data = my_60_teams)
@@ -43,26 +43,32 @@ predict(lin90, data.frame(RD = 10))
 
 #  This is the book's solution which is better.  In the future, keep this in mind.
 
-Teams %>% filter(yearID >= 1961, yearID <= 2000) %>% 
-  mutate(Era = ifelse(yearID <= 1970, "1961-1970",
-                      ifelse(yearID <= 1980, "1971-1980",
-                             ifelse(yearID <= 1990, "1981-1990", "1991-2000"))),
-         WinPct = W / (W + L)) ->
+Teams %>% filter(yearID >= 1961, yearID <= 2000) %>%
+  mutate(Era = ifelse(
+    yearID <= 1970,
+    "1961-1970",
+    ifelse(
+      yearID <= 1980,
+      "1971-1980",
+      ifelse(yearID <= 1990, "1981-1990", "1991-2000")
+    )
+  ),
+  WinPct = W / (W + L)) ->
   Eras
 
-one_fit <- function(years){
-  lm(WinPct ~ I(R - RA), 
+one_fit <- function(years) {
+  lm(WinPct ~ I(R - RA),
      data = filter(Eras, Era == years))
 }
 
-the_eras <- c("1961-1970", "1971-1980", 
+the_eras <- c("1961-1970", "1971-1980",
               "1981-1990", "1991-2000")
 four_fits <- lapply(the_eras, one_fit)
 names(four_fits) <- the_eras
 
 sapply(four_fits, coef)
 
-p10 <- function(fit){
+p10 <- function(fit) {
   predict(fit, data.frame(R = 30, RA = 20))
 }
 sapply(four_fits, p10)
@@ -74,7 +80,8 @@ my_19th_teams <- Teams %>% filter(yearID <= 1900) %>%
   select(teamID, yearID, W, L, R, RA) %>%
   mutate(RD = R - RA, Wpct = W / (W + L))
 
-my_19th_teams <- my_19th_teams %>% mutate(Wpct_pyt = R ^ 2 / (R ^ 2 + RA ^ 2))
+my_19th_teams <-
+  my_19th_teams %>% mutate(Wpct_pyt = R ^ 2 / (R ^ 2 + RA ^ 2))
 
 
 lin19 <- lm(Wpct_pyt ~ RD, data = my_19th_teams)
@@ -85,18 +92,18 @@ res <- augment(lin19)
 res %>% mutate(type = ifelse(Wpct_pyt > .7, "great",
                              ifelse(Wpct_pyt < .3, "bad", "other"))) -> res
 
-ggplot(res, aes(Wpct_pyt, .resid, color=type)) +
+ggplot(res, aes(Wpct_pyt, .resid, color = type)) +
   geom_point() +
   geom_hline(yintercept = 0)
 
 # Book solution:
 
-Teams %>% filter(yearID <= 1900) %>% 
+Teams %>% filter(yearID <= 1900) %>%
   mutate(WinPct = W / (W + L)) ->
   D_19th
 
 #(b) By inspecting the residual plot of your fitted model from (a), did the great and poor teams in the 19th century do better or worse than one would expect on the basis of their run differentials?
-  
+
 #  Below I construct a graph of the values of R - RA (horizontal) against the residual (vertical).  I color the point by the winning proportion (bad is WinPct < .3 and great is WinPct > .7).  We see some great teams with large positive residuals and bad teams with large negative residuals.  By exploring further, can find the identity of the teams with the large residuals.
 
 # This code also doesn't plot
@@ -107,7 +114,7 @@ library(broom)
 out <- augment(fit)
 out %>% mutate(type = ifelse(WinPct > .7, "great",
                              ifelse(WinPct < .3, "bad", "other"))) -> out
-ggplot(out, aes(I.R...RA., .resid, color=type)) +
+ggplot(out, aes(I.R...RA., .resid, color = type)) +
   geom_point() +
   geom_hline(yintercept = 0)
 
@@ -126,12 +133,12 @@ lin21 <- lm(Wpct_pyt ~ RD, data = my_21st_teams)
 # b. On the basis of the fit and list of managers
 
 out <- augment(lin21, data = select(d, yearID, teamID,
-                                  R, RA))
+                                    R, RA))
 out %>% inner_join(select(Managers, playerID, yearID,
-                          teamID), 
+                          teamID),
                    by = c("yearID", "teamID")) -> out
-out %>% group_by(playerID) %>% 
-  summarize(N = n(), Mean_Residual = mean(.resid)) %>% 
+out %>% group_by(playerID) %>%
+  summarize(N = n(), Mean_Residual = mean(.resid)) %>%
   arrange(desc(Mean_Residual)) -> out
 head(out)
 tail(out)
