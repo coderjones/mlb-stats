@@ -146,3 +146,6 @@ data2016 %>%
 ```
 
 ## 5.3 Creating the Matrix
+
+From here I will be reading and continue my work with the end of chapter
+exercises.
