@@ -52,7 +52,7 @@ author.
 read the column names:
 
 ``` r
-fields <- read_csv("data/fields.csv")
+fields <- read_csv("../data/fields.csv")
 ```
 
     ## 
@@ -66,7 +66,7 @@ fields <- read_csv("data/fields.csv")
 Load the 2016 data and add the column names:
 
 ``` r
-data2016 <- read_csv("data/all2016.csv",
+data2016 <- read_csv("../data/all2016.csv",
                     col_names = pull(fields, Header),
                     na = character())
 ```
@@ -100,14 +100,49 @@ data2016 <- read_csv("data/all2016.csv",
     ## ℹ Use `spec()` for the full column specifications.
 
     ## Warning: 182 parsing failures.
-    ##  row                    col           expected   actual               file
-    ## 3347 REMOVED_FOR_PR_RUN2_ID 1/0/T/F/TRUE/FALSE navad002 'data/all2016.csv'
-    ## 5180 REMOVED_FOR_PR_RUN2_ID 1/0/T/F/TRUE/FALSE cronc002 'data/all2016.csv'
-    ## 5185 REMOVED_FOR_PR_RUN3_ID 1/0/T/F/TRUE/FALSE mazan001 'data/all2016.csv'
-    ## 6233 REMOVED_FOR_PR_RUN2_ID 1/0/T/F/TRUE/FALSE calhk001 'data/all2016.csv'
-    ## 7319 REMOVED_FOR_PR_RUN2_ID 1/0/T/F/TRUE/FALSE hollm001 'data/all2016.csv'
-    ## .... ...................... .................. ........ ..................
+    ##  row                    col           expected   actual                  file
+    ## 3347 REMOVED_FOR_PR_RUN2_ID 1/0/T/F/TRUE/FALSE navad002 '../data/all2016.csv'
+    ## 5180 REMOVED_FOR_PR_RUN2_ID 1/0/T/F/TRUE/FALSE cronc002 '../data/all2016.csv'
+    ## 5185 REMOVED_FOR_PR_RUN3_ID 1/0/T/F/TRUE/FALSE mazan001 '../data/all2016.csv'
+    ## 6233 REMOVED_FOR_PR_RUN2_ID 1/0/T/F/TRUE/FALSE calhk001 '../data/all2016.csv'
+    ## 7319 REMOVED_FOR_PR_RUN2_ID 1/0/T/F/TRUE/FALSE hollm001 '../data/all2016.csv'
+    ## .... ...................... .................. ........ .....................
     ## See problems(...) for more details.
 
 There’s potential to score at each plate appearance with the chance
 being greater when runners are on base.
+
+RUNS.ROI = Total Runs Scored in Inning - Current Runs Scored.
+
+``` r
+data2016 %>%
+        mutate(RUNS = AWAY_SCORE_CT + HOME_SCORE_CT,
+               HALF.INNING = paste(GAME_ID, INN_CT, BAT_HOME_ID),
+               RUNS.SCORED =
+                       (BAT_DEST_ID > 3) + (RUN1_DEST_ID > 3) +
+                       (RUN2_DEST_ID > 3) + (RUN3_DEST_ID > 3)) ->
+        data2016
+```
+
+We want to compute the max score for each half inning
+
+``` r
+data2016 %>%
+        group_by(HALF.INNING) %>%
+        summarize(Outs.Inning = sum(EVENT_OUTS_CT),
+                  Runs.Inning = sum(RUNS.SCORED),
+                  Runs.Start = first(RUNS),
+                  MAX.RUNS = Runs.Inning + Runs.Start) ->
+        half_innings
+```
+
+Now we’ll merge the dataframes
+
+``` r
+data2016 %>%
+        inner_join(half_innings, by = "HALF.INNING") %>%
+        mutate(RUNS.ROI = MAX.RUNS - RUNS) ->
+        data2016
+```
+
+## 5.3 Creating the Matrix
