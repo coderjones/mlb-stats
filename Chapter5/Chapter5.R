@@ -72,12 +72,24 @@ data2016 %>%
             by = c("NEW.STATE" = "STATE")) %>%
   rename(Runs.New.State = Mean) %>%
   replace_na(list(Runs.New.State = 0)) %>%
-  mutate(run_value = Runs.New.State = Runs.State +
+  mutate(run_value = Runs.New.State - Runs.State +
            RUNS.SCORED) -> data2016
 
 # double
 data2016 %>% filter(EVENT_CD == 21) -> doubles
 
-mean_doubles <- data2016 %>%
-  summarise(mean_run_values = mean(RUNS.VAULE))
+mean_doubles <- doubles %>%
+  summarise(mean_run_values = mean(run_value))
+
+# triple
+data2016 %>% filter(EVENT_CD == 22) -> triples
+
+mean_triples <- triples %>%
+  summarise(mean_run_values = mean(run_value))
+
+# The book does it this way.  They used a pre-processed data set for d2016
+#d2016 %>% filter(EVENT_CD == 21) %>% 
+#  summarize(M = mean(RUNS.VALUE))
+#d2016 %>% filter(EVENT_CD == 22) %>% 
+#  summarize(M = mean(RUNS.VALUE))
 
